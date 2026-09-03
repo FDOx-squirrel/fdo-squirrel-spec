@@ -1,0 +1,3 @@
+# Only dependency: step_render.py reads three YAML files from data/raw/.
+# Everything else (ast, html, re, hashlib) is stdlib.
+PyYAML>=6.0

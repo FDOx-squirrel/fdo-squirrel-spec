@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "fdo-squirrel-spec: Metadata Format for FDO Squirrel"
+abstract: >-
+  Generated specification of MD.cff, the metadata format read by
+  fdo-squirrel to build FAIR Digital Objects: ZIP package structure, the
+  MD.cff JSON Schema, the crosswalk to RDF, and the file classification
+  rules. Content is derived at build time from fdo-squirrel itself rather
+  than duplicated by hand.
+type: software
+authors:
+  - family-names: Thiery
+    given-names: Florian
+    orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: insert ORCID
+license: MIT
+version: "0.1.0"
+date-released: "2026-09-03"
+repository-code: "https://github.com/FDOx-squirrel/fdo-squirrel-spec"
+keywords:
+  - FAIR Digital Objects
+  - metadata
+  - FDO
+  - MD.cff
+  - ReSpec
+  - RDF

@@ -1,15 +1,15 @@
-title: Your Specification Title
-description: Your Specification Description
-url: "https://transmute-industries.github.io/respec-github-pages/"
+title: MD.cff — Metadata Format for FDO Squirrel
+description: Specification of MD.cff, the metadata format read by fdo-squirrel to build FAIR Digital Objects.
+url: "https://fdox-squirrel.github.io/fdo-squirrel-spec/"
 
 github:
   private: false
   license:
-    name: Apache-2.0
+    name: MIT
   source:
-    branch: "master"
+    branch: "main"
     path: "/"
-  repository_url: "https://github.com/transmute-industries/respec-github-pages"
+  repository_url: "https://github.com/FDOx-squirrel/fdo-squirrel-spec"
 
 defaults:
   - scope:

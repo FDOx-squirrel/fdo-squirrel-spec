@@ -1,3 +1,29 @@
+# --- Python ---
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Note ---
+# dist/ (pipeline report) and docs/ (the rendered ReSpec page, served by
+# GitHub Pages) are versioned products, not build noise — NOT ignored.
+# data/raw/ is the reused snapshot from fdo-squirrel — NOT ignored either.
+
+# from template
 node_modules
 .DS_Store
 Gemfile.lock
