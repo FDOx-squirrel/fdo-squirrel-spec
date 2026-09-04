@@ -1,3 +1,7 @@
-# Only dependency: step_render.py reads three YAML files from data/raw/.
-# Everything else (ast, html, re, hashlib) is stdlib.
+# step_render.py reads three YAML files from data/raw/.
 PyYAML>=6.0
+# step_render.py parses the two worked-example TTL files (S2, 2026-09-04);
+# one of them is invalid Turtle as harvested, so a real parser plus
+# example_repair.py, not a regex, is what catches and reports that.
+# Everything else (ast, html, re, hashlib) is stdlib.
+rdflib>=7.0

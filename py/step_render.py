@@ -9,6 +9,12 @@ Gemfile/CSS around it are untouched template infrastructure; only the front
 matter values and the body content below are project-specific, and every
 table in the body is derived from a data/raw/ file at build time. See
 PRIMER.md A2 for which file feeds which section.
+
+The two worked examples (data/raw/examples/*.ttl) are parsed with rdflib
+rather than by regex, because they are real harvested Turtle and one of them
+is invalid as harvested (see example_repair.py) — a text-only extraction
+would have to special-case that silently, a graph parse plus a declared
+repair layer says so on the page instead.
 """
 
 from __future__ import annotations
@@ -20,11 +26,16 @@ import re
 import sys
 from pathlib import Path
 
+import rdflib
 import yaml
+from rdflib import RDF, RDFS, Namespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import example_repair
 from fdo_squirrel_spec_utils import (
     DOCS,
+    EXAMPLE_PREFIXES,
+    EXAMPLE_RECORDS,
     RAW_FILES,
     RELEASE,
     SOURCE_REPO,
@@ -37,6 +48,12 @@ SPEC_SHORT_NAME = "fdo-squirrel-spec"
 SPEC_TITLE = "MD.cff — Metadata Format for FDO Squirrel"
 REPO_URL = "https://github.com/FDOx-squirrel/fdo-squirrel-spec"
 
+DCAT = Namespace("http://www.w3.org/ns/dcat#")
+DCT = Namespace("http://purl.org/dc/terms/")
+SCHEMA = Namespace("https://schema.org/")
+FDO = Namespace("https://w3id.org/fdo-squirrel/")
+GEOSPARQL = Namespace("http://www.opengis.net/ont/geosparql#")
+
 # The respec.html layout does `JSON.parse(`{{ page.respec }}`)` inside a JS
 # template literal, so this only needs to be valid JSON once whitespace is
 # collapsed — the exact YAML folding of the front matter block doesn't matter.
@@ -48,7 +65,7 @@ RESPEC_CONFIG = {
     "issues": f"{REPO_URL}/issues",
     "group": {
         "name": "Research Squirrel Engineers",
-        "url": "https://github.com/Research-Squirrel-Engineers",
+        "url": "https://github.com/FDOx-squirrel",
         "list": "",
         "patentUri": "",
     },
@@ -56,7 +73,7 @@ RESPEC_CONFIG = {
         {
             "name": "Florian Thiery",
             "company": "LEIZA / Research Squirrel Engineers",
-            "url": "https://github.com/Research-Squirrel-Engineers",
+            "url": "https://github.com/FDOx-squirrel",
         }
     ],
     "bibliography": {},
@@ -92,10 +109,25 @@ def load_zip_member_candidates() -> dict:
     return out
 
 
-def load_ttl_prefixes() -> list[tuple[str, str]]:
-    """@prefix declarations only — the instance body is a known-flawed demo
-    (mixes SoftwareFDO and 3DDataFDO fields), so it is not rendered here."""
-    text = RAW_FILES["example_ttl"].read_text(encoding="utf-8")
+def load_example(key: str) -> tuple[rdflib.Graph, list[str]]:
+    """Parse a harvested worked-example TTL, repairing known upstream defects
+    in memory only (see example_repair.py). The file on disk is never
+    touched, so content_fingerprint() always hashes the true harvested bytes."""
+    text = RAW_FILES[key].read_text(encoding="utf-8")
+
+    def try_parse(t: str) -> None:
+        rdflib.Graph().parse(data=t, format="turtle")
+
+    repaired_text, applied = example_repair.repair(text, try_parse, EXAMPLE_PREFIXES)
+    g = rdflib.Graph()
+    g.parse(data=repaired_text, format="turtle")
+    return g, applied
+
+
+def declared_prefixes(key: str) -> list[tuple[str, str]]:
+    """@prefix declarations as actually written in the raw harvested file —
+    not repaired, so a missing one shows up as missing here too."""
+    text = RAW_FILES[key].read_text(encoding="utf-8")
     return re.findall(r"@prefix\s+([\w-]+):\s+<([^>]+)>", text)
 
 
@@ -105,7 +137,18 @@ def load_ttl_prefixes() -> list[tuple[str, str]]:
 # --------------------------------------------------------------------------
 
 def esc(s) -> str:
+    if s is None:
+        return "—"
     return html.escape(str(s), quote=True)
+
+
+def humanize_bytes(n: int) -> str:
+    size = float(n)
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024 or unit == "GB":
+            return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} GB"
 
 
 def properties_table(schema: dict) -> str:
@@ -193,12 +236,115 @@ of inside an archive, and either may be supplied by URL (a remote ZIP is
 downloaded and read the same way).</p>"""
 
 
-def vocabularies_section(prefixes: list[tuple[str, str]]) -> str:
-    rows = "".join(f"<tr><td><code>{esc(p)}</code></td><td><code>{esc(uri)}</code></td></tr>" for p, uri in prefixes)
-    return f"""<p class="note">The vocabularies below are the namespaces declared in
-fdo-squirrel's demo instance. That instance is known to mix fields from more
-than one FDO class and is <strong>not</strong> reproduced here as a worked
-example for that reason — only the namespace list is derived from it.</p>
+def creator_name(g: rdflib.Graph, uri: rdflib.term.URIRef) -> str:
+    name = g.value(uri, SCHEMA.name)
+    return str(name) if name else str(uri)
+
+
+def worked_example_section(key: str) -> str:
+    record = EXAMPLE_RECORDS[key]
+    g, repairs = load_example(key)
+    subj = next(g.subjects(RDF.type, DCAT.Dataset), None)
+    if subj is None:
+        return f'<section><p class="note">Could not find a dcat:Dataset subject in {esc(key)}.</p></section>'
+
+    title = g.value(subj, DCT.title)
+    descriptions = [str(d) for d in g.objects(subj, DCT.description)]
+    desc = descriptions[0] if descriptions else ""
+    extra_desc_note = (
+        f" ({len(descriptions) - 1} further description value(s) in this record, "
+        "a data quality matter for fdo-squirrel-registry, not shown here)"
+        if len(descriptions) > 1
+        else ""
+    )
+    version = g.value(subj, DCT.hasVersion)
+    license_ = g.value(subj, DCT.license)
+    creators = [creator_name(g, c) for c in g.objects(subj, DCT.creator)]
+    created = g.value(subj, DCT.created)
+    modified = g.value(subj, DCT.modified)
+    context = g.value(subj, FDO.context)
+    geom = g.value(subj, GEOSPARQL.hasGeometry)
+    wkt = g.value(geom, GEOSPARQL.asWKT) if geom else None
+    temporal = g.value(subj, DCT.temporal)
+    temporal_label = g.value(temporal, RDFS.label) if temporal else None
+
+    dists = list(g.objects(subj, DCAT.distribution))
+    total_bytes = sum(int(n) for d in dists if (n := g.value(d, DCAT.byteSize)) is not None)
+    roles: dict[str, int] = {}
+    for d in dists:
+        r = g.value(d, FDO.role)
+        r = str(r) if r else "?"
+        roles[r] = roles.get(r, 0) + 1
+    role_summary = ", ".join(f"{esc(k)}: {v}" for k, v in sorted(roles.items()))
+
+    sample = dists[:3]
+    sample_rows = "".join(
+        f"<tr><td><code>{esc(g.value(d, FDO.path))}</code></td><td>{esc(g.value(d, FDO.role))}</td>"
+        f"<td>{esc(g.value(d, DCAT.byteSize))}</td></tr>"
+        for d in sample
+    )
+    more_note = (
+        f'<p class="note">{len(dists) - len(sample)} further distribution(s) omitted here for '
+        "readability — see the full record for the complete list.</p>"
+        if len(dists) > len(sample)
+        else ""
+    )
+
+    repair_note = ""
+    if repairs:
+        labels = ", ".join(esc(r.split(":", 1)[1]) for r in repairs)
+        repair_note = f"""<p class="note"><strong>As harvested, this record is invalid Turtle:</strong>
+it uses the prefix(es) <code>{labels}</code> without ever declaring them — a defect in the
+fdo-squirrel version that produced it (fixed in later versions, see PRIMER.md A1). The file
+on disk in this repository under <code>data/raw/examples/</code> is the unmodified harvested
+original; the missing <code>@prefix</code> line(s) were added only in memory, the same way
+fdo-squirrel-registry's own repair layer does it, to render this section.</p>"""
+
+    return f"""
+<section>
+<h3>{esc(record['fdo_class'])} — {esc(title)}</h3>
+{repair_note}
+<p>{esc(desc)}{extra_desc_note}</p>
+<table>
+<tbody>
+<tr><td>Version</td><td>{esc(version)}</td></tr>
+<tr><td>Creators</td><td>{esc(', '.join(creators))}</td></tr>
+<tr><td>Licence</td><td><a href="{esc(license_)}">{esc(license_)}</a></td></tr>
+<tr><td>Created / modified</td><td>{esc(created)} / {esc(modified)}</td></tr>
+{f'<tr><td>Context</td><td>{esc(context)}</td></tr>' if context else ''}
+{f'<tr><td>Location (WKT)</td><td><code>{esc(wkt)}</code></td></tr>' if wkt else ''}
+{f'<tr><td>Temporal span</td><td>{esc(temporal_label)}</td></tr>' if temporal_label else ''}
+<tr><td>Distributions</td><td>{len(dists)} files, {humanize_bytes(total_bytes)} total ({role_summary})</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th>Sample distribution path</th><th>Role</th><th>Bytes</th></tr></thead>
+<tbody>{sample_rows}</tbody>
+</table>
+{more_note}
+<p class="note">Full record: <a href="{esc(record['doi'])}">{esc(record['doi'])}</a> —
+as harvested by fdo-squirrel-registry: <a href="{esc(record['harvested_from'])}">source file</a></p>
+</section>
+"""
+
+
+def vocabularies_section() -> str:
+    all_prefixes: dict[str, str] = {}
+    for key in ("example_software", "example_3d"):
+        for p, uri in declared_prefixes(key):
+            all_prefixes.setdefault(p, uri)
+    rows = "".join(
+        f"<tr><td><code>{esc(p)}</code></td><td><code>{esc(uri)}</code></td></tr>"
+        for p, uri in sorted(all_prefixes.items())
+    )
+    return f"""<p class="note">The prefixes below are the <code>@prefix</code> lines actually present
+in the two worked examples above, as harvested — not the crosswalk's declared target namespaces
+(compare with the crosswalk table above). Notably, the crosswalk config declares
+<code>fdo: https://w3id.org/fdo#</code>, but every record fdo-squirrel has actually written —
+both worked examples here and fdo-squirrel-registry's own namespace table — uses
+<code>fdo: https://w3id.org/fdo-squirrel/</code> instead. This looks like the crosswalk
+config drifting from the generator (see PRIMER.md Teil D); worth confirming with
+fdo-squirrel directly.</p>
 <table><thead><tr><th>Prefix</th><th>Namespace</th></tr></thead>
 <tbody>{rows}</tbody></table>"""
 
@@ -225,7 +371,6 @@ def body() -> str:
     crosswalk = load_crosswalk()
     classification = load_classification()
     candidates = load_zip_member_candidates()
-    ttl_prefixes = load_ttl_prefixes()
 
     provenance_rows = "".join(
         f"<tr><td><code>{esc(key)}</code></td><td><code>{esc(content_fingerprint(path))}</code></td></tr>"
@@ -243,10 +388,10 @@ package by role.</p>
 
 <section id="sotd">
 <p>This is generated documentation, not a W3C process document. Every table
-below is built at render time from files copied out of fdo-squirrel (see the
-provenance table at the end); it is not hand-maintained prose and can go
-stale exactly when fdo-squirrel's schema does — run
-<code>python main.py fetch</code> to refresh, then <code>python main.py</code>
+below is built at render time from files copied out of fdo-squirrel and
+fdo-squirrel-registry (see the provenance table at the end); it is not
+hand-maintained prose and can go stale exactly when those repositories do —
+run <code>python main.py fetch</code> to refresh, then <code>python main.py</code>
 to rebuild this page.</p>
 </section>
 
@@ -281,8 +426,19 @@ named handlers over the following namespaces:</p>
 </section>
 
 <section>
-<h2>Vocabularies in the example instance</h2>
-{vocabularies_section(ttl_prefixes)}
+<h2>Worked examples</h2>
+<p>Two real, harvested <code>fdo-metadata.ttl</code> instances from
+<a href="{esc(SOURCE_REPO.rsplit('/', 1)[0] + '/fdo-squirrel-registry')}">fdo-squirrel-registry</a>,
+one per FDO class currently represented there (no AnalysisFDO instance exists
+yet). Unlike fdo-squirrel's own demo instance, these are single-class and
+SHACL-gate-passed.</p>
+{worked_example_section('example_software')}
+{worked_example_section('example_3d')}
+</section>
+
+<section>
+<h2>Vocabularies actually used</h2>
+{vocabularies_section()}
 </section>
 
 <section id="conformance">

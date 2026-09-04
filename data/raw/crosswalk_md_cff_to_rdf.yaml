@@ -148,21 +148,15 @@ mappings:
         from: "target"
         value_type: "object_id_label"
 
-  # ---------------- Identifiers ----------------
-  identifiers:
-    multiple: true
-    emit:
-      - handler: "typed_identifier"
-
   # ---------------- Spatial ----------------
   spatial:
     emit:
       - predicate: "dct:spatial"
         from: "id"
         value_type: "iri_optional"
-      - predicate: "geosparql:hasBoundingBox"
+      - predicate: "dcat:bbox"
         from: "bounding_box"
-        value_type: "bbox_envelope" # "west,south,east,north" -> ENVELOPE(west,east,north,south)^^geosparql:wktLiteral
+        value_type: "literal" # "west,south,east,north"
       - handler: "geosparql_geometry"
         from: "wkt"
 

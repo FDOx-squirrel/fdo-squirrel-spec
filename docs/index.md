@@ -10,7 +10,7 @@ respec: >
     "issues": "https://github.com/FDOx-squirrel/fdo-squirrel-spec/issues",
     "group": {
       "name": "Research Squirrel Engineers",
-      "url": "https://github.com/Research-Squirrel-Engineers",
+      "url": "https://github.com/FDOx-squirrel",
       "list": "",
       "patentUri": ""
     },
@@ -18,7 +18,7 @@ respec: >
       {
         "name": "Florian Thiery",
         "company": "LEIZA / Research Squirrel Engineers",
-        "url": "https://github.com/Research-Squirrel-Engineers"
+        "url": "https://github.com/FDOx-squirrel"
       }
     ],
     "bibliography": {}
@@ -27,7 +27,7 @@ respec: >
 
 <section id="abstract">
 <p>This document specifies <dfn>MD.cff</dfn>, the metadata format read by
-<a href="https://github.com/Research-Squirrel-Engineers/fdo-squirrel">fdo-squirrel</a> to turn a data package into a
+<a href="https://github.com/FDOx-squirrel/fdo-squirrel">fdo-squirrel</a> to turn a data package into a
 FAIR Digital Object (FDO): the package's ZIP structure, the MD.cff schema
 itself, the crosswalk to RDF, and the rules used to classify files inside a
 package by role.</p>
@@ -35,10 +35,10 @@ package by role.</p>
 
 <section id="sotd">
 <p>This is generated documentation, not a W3C process document. Every table
-below is built at render time from files copied out of fdo-squirrel (see the
-provenance table at the end); it is not hand-maintained prose and can go
-stale exactly when fdo-squirrel's schema does — run
-<code>python main.py fetch</code> to refresh, then <code>python main.py</code>
+below is built at render time from files copied out of fdo-squirrel and
+fdo-squirrel-registry (see the provenance table at the end); it is not
+hand-maintained prose and can go stale exactly when those repositories do —
+run <code>python main.py fetch</code> to refresh, then <code>python main.py</code>
 to rebuild this page.</p>
 </section>
 
@@ -88,13 +88,83 @@ named handlers over the following namespaces:</p>
 </section>
 
 <section>
-<h2>Vocabularies in the example instance</h2>
-<p class="note">The vocabularies below are the namespaces declared in
-fdo-squirrel's demo instance. That instance is known to mix fields from more
-than one FDO class and is <strong>not</strong> reproduced here as a worked
-example for that reason — only the namespace list is derived from it.</p>
+<h2>Worked examples</h2>
+<p>Two real, harvested <code>fdo-metadata.ttl</code> instances from
+<a href="https://github.com/FDOx-squirrel/fdo-squirrel-registry">fdo-squirrel-registry</a>,
+one per FDO class currently represented there (no AnalysisFDO instance exists
+yet). Unlike fdo-squirrel's own demo instance, these are single-class and
+SHACL-gate-passed.</p>
+
+<section>
+<h3>fdo:SoftwareFDO — Ogham 3D EpiDoc Extractor</h3>
+<p class="note"><strong>As harvested, this record is invalid Turtle:</strong>
+it uses the prefix(es) <code>crmdig, crm</code> without ever declaring them — a defect in the
+fdo-squirrel version that produced it (fixed in later versions, see PRIMER.md A1). The file
+on disk in this repository under <code>data/raw/examples/</code> is the unmodified harvested
+original; the missing <code>@prefix</code> line(s) were added only in memory, the same way
+fdo-squirrel-registry's own repair layer does it, to render this section.</p>
+<p>LOD Extractor for TEI/EpiDoc Files from the Ogham in 3D Project</p>
+<table>
+<tbody>
+<tr><td>Version</td><td>1.1</td></tr>
+<tr><td>Creators</td><td>Thiery, Florian, Homburg, Timo</td></tr>
+<tr><td>Licence</td><td><a href="https://spdx.org/licenses/MIT.html">https://spdx.org/licenses/MIT.html</a></td></tr>
+<tr><td>Created / modified</td><td>2019-08-24 / 2024-09-24</td></tr>
+<tr><td>Context</td><td>Ogham Stones in the Wild and in Museums in Ireland bearing Ogham inscriptions.</td></tr>
+<tr><td>Location (WKT)</td><td><code>&lt;http://www.opengis.net/def/crs/EPSG/0/4326&gt; POINT(-8.0 53.0)</code></td></tr>
+<tr><td>Temporal span</td><td>Ogham stone inscriptions (ca. 4th–7th century CE)</td></tr>
+<tr><td>Distributions</td><td>242 files, 50.2 MB total (documentation: 2, script: 27, software: 213)</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th>Sample distribution path</th><th>Role</th><th>Bytes</th></tr></thead>
+<tbody><tr><td><code>.github/workflows/main.yml</code></td><td>software</td><td>879</td></tr><tr><td><code>.gitignore</code></td><td>software</td><td>9</td></tr><tr><td><code>ciic/bibliog.csv</code></td><td>software</td><td>64526</td></tr></tbody>
+</table>
+<p class="note">239 further distribution(s) omitted here for readability — see the full record for the complete list.</p>
+<p class="note">Full record: <a href="https://doi.org/10.5281/zenodo.18369125">https://doi.org/10.5281/zenodo.18369125</a> —
+as harvested by fdo-squirrel-registry: <a href="https://github.com/FDOx-squirrel/fdo-squirrel-registry/blob/main/data/raw/fdo/18369126/fdo-metadata.ttl">source file</a></p>
+</section>
+
+
+<section>
+<h3>fdo:3DDataFDO — CO074-148----</h3>
+
+<p>Ogham Stone CO074-148---- located in the UCC Stone Corridor (3 further description value(s) in this record, a data quality matter for fdo-squirrel-registry, not shown here)</p>
+<table>
+<tbody>
+<tr><td>Version</td><td>1.0</td></tr>
+<tr><td>Creators</td><td>Distel, Anne-Karoline, Thiery, Florian</td></tr>
+<tr><td>Licence</td><td><a href="https://spdx.org/licenses/CC-BY-NC-SA-4.0.html">https://spdx.org/licenses/CC-BY-NC-SA-4.0.html</a></td></tr>
+<tr><td>Created / modified</td><td>2024-06-05 / 2026-02-21</td></tr>
+<tr><td>Context</td><td>Ogham Stones in the Wild and in Museums in Ireland bearing Ogham inscriptions.</td></tr>
+<tr><td>Location (WKT)</td><td><code>&lt;http://www.opengis.net/def/crs/EPSG/0/4326&gt; POINT(-8.4924208 51.8937150)</code></td></tr>
+<tr><td>Temporal span</td><td>Ogham stone inscriptions (ca. 4th–7th century CE)</td></tr>
+<tr><td>Distributions</td><td>11 files, 283.7 MB total (data: 2, documentation: 3, metadata: 2, model: 4)</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th>Sample distribution path</th><th>Role</th><th>Bytes</th></tr></thead>
+<tbody><tr><td><code>CITATION.cff</code></td><td>metadata</td><td>326</td></tr><tr><td><code>CO074-148----.glb</code></td><td>model</td><td>126317064</td></tr><tr><td><code>CO074-148----.jpg</code></td><td>documentation</td><td>1311939</td></tr></tbody>
+</table>
+<p class="note">8 further distribution(s) omitted here for readability — see the full record for the complete list.</p>
+<p class="note">Full record: <a href="https://doi.org/10.5281/zenodo.18724635">https://doi.org/10.5281/zenodo.18724635</a> —
+as harvested by fdo-squirrel-registry: <a href="https://github.com/FDOx-squirrel/fdo-squirrel-registry/blob/main/data/raw/fdo/18744133/fdo-metadata.ttl">source file</a></p>
+</section>
+
+</section>
+
+<section>
+<h2>Vocabularies actually used</h2>
+<p class="note">The prefixes below are the <code>@prefix</code> lines actually present
+in the two worked examples above, as harvested — not the crosswalk's declared target namespaces
+(compare with the crosswalk table above). Notably, the crosswalk config declares
+<code>fdo: https://w3id.org/fdo#</code>, but every record fdo-squirrel has actually written —
+both worked examples here and fdo-squirrel-registry's own namespace table — uses
+<code>fdo: https://w3id.org/fdo-squirrel/</code> instead. This looks like the crosswalk
+config drifting from the generator (see PRIMER.md Teil D); worth confirming with
+fdo-squirrel directly.</p>
 <table><thead><tr><th>Prefix</th><th>Namespace</th></tr></thead>
-<tbody><tr><td><code>dcat</code></td><td><code>http://www.w3.org/ns/dcat#</code></td></tr><tr><td><code>dct</code></td><td><code>http://purl.org/dc/terms/</code></td></tr><tr><td><code>fdo</code></td><td><code>https://w3id.org/fdo-squirrel/</code></td></tr><tr><td><code>schema</code></td><td><code>https://schema.org/</code></td></tr><tr><td><code>xsd</code></td><td><code>http://www.w3.org/2001/XMLSchema#</code></td></tr></tbody></table>
+<tbody><tr><td><code>cff</code></td><td><code>https://citation-file-format.github.io/terms/</code></td></tr><tr><td><code>codemeta</code></td><td><code>https://codemeta.github.io/terms/</code></td></tr><tr><td><code>crm</code></td><td><code>http://www.cidoc-crm.org/cidoc-crm/</code></td></tr><tr><td><code>crmdig</code></td><td><code>http://www.ics.forth.gr/isl/CRMdig/</code></td></tr><tr><td><code>dcat</code></td><td><code>http://www.w3.org/ns/dcat#</code></td></tr><tr><td><code>dct</code></td><td><code>http://purl.org/dc/terms/</code></td></tr><tr><td><code>fdo</code></td><td><code>https://w3id.org/fdo-squirrel/</code></td></tr><tr><td><code>foaf</code></td><td><code>http://xmlns.com/foaf/0.1/</code></td></tr><tr><td><code>geosparql</code></td><td><code>http://www.opengis.net/ont/geosparql#</code></td></tr><tr><td><code>owl</code></td><td><code>http://www.w3.org/2002/07/owl#</code></td></tr><tr><td><code>rdf</code></td><td><code>http://www.w3.org/1999/02/22-rdf-syntax-ns#</code></td></tr><tr><td><code>rdfs</code></td><td><code>http://www.w3.org/2000/01/rdf-schema#</code></td></tr><tr><td><code>schema</code></td><td><code>https://schema.org/</code></td></tr><tr><td><code>sf</code></td><td><code>http://www.opengis.net/ont/sf#</code></td></tr><tr><td><code>wd</code></td><td><code>http://www.wikidata.org/entity/</code></td></tr><tr><td><code>wdt</code></td><td><code>http://www.wikidata.org/prop/direct/</code></td></tr><tr><td><code>xsd</code></td><td><code>http://www.w3.org/2001/XMLSchema#</code></td></tr></tbody></table>
 </section>
 
 <section id="conformance">
@@ -105,7 +175,7 @@ conforms if and only if it validates against the JSON Schema shipped in
 
 <section class="appendix">
 <h2>Provenance</h2>
-<p>Built 2026-09-03 from these files (sha256, first 12 hex digits):</p>
+<p>Built 2026-09-04 from these files (sha256, first 12 hex digits):</p>
 <table><thead><tr><th>Source</th><th>Fingerprint</th></tr></thead>
-<tbody><tr><td><code>schema</code></td><td><code>5f762f7408bf</code></td></tr><tr><td><code>crosswalk</code></td><td><code>177987905b81</code></td></tr><tr><td><code>classification</code></td><td><code>561fc9def59c</code></td></tr><tr><td><code>example_ttl</code></td><td><code>9ada967d3bf6</code></td></tr><tr><td><code>package_source</code></td><td><code>c16ac42a43fd</code></td></tr></tbody></table>
+<tbody><tr><td><code>schema</code></td><td><code>5f762f7408bf</code></td></tr><tr><td><code>crosswalk</code></td><td><code>542b30bae4fd</code></td></tr><tr><td><code>classification</code></td><td><code>561fc9def59c</code></td></tr><tr><td><code>package_source</code></td><td><code>19c867a6ac1d</code></td></tr><tr><td><code>example_software</code></td><td><code>a54ab63289fc</code></td></tr><tr><td><code>example_3d</code></td><td><code>e27114ffc2ce</code></td></tr></tbody></table>
 </section>

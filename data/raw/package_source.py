@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import zipfile
 import urllib.request
-import tempfile
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, List
@@ -134,7 +133,6 @@ def load_package_from_source(
         "used_md_member_in_zip": None,
         "used_cff_member_in_zip": None,
         "zip_members": None,
-        "package_local_path": None,
     }
 
     # URL ZIP
@@ -143,14 +141,6 @@ def load_package_from_source(
             raise ValueError("For now, PACKAGE_SOURCE must be a .zip (URL).")
         info["source_type"] = "url_zip"
         zbytes = _download_bytes(source, timeout=timeout)
-
-        tmp = tempfile.NamedTemporaryFile(
-            prefix="fdo-squirrel-src-", suffix=".zip", delete=False
-        )
-        tmp.write(zbytes)
-        tmp.close()
-        info["package_local_path"] = tmp.name
-
         with zipfile.ZipFile(BytesIO(zbytes), "r") as zf:
             members = zf.namelist()
             info["zip_members"] = members
@@ -175,7 +165,6 @@ def load_package_from_source(
         raise ValueError("For now, PACKAGE_SOURCE must be a .zip (local path).")
 
     info["source_type"] = "local_zip"
-    info["package_local_path"] = str(p)
     with zipfile.ZipFile(p, "r") as zf:
         members = zf.namelist()
         info["zip_members"] = members

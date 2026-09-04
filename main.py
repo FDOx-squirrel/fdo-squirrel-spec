@@ -6,7 +6,8 @@
     python main.py --only render       one step
     python main.py --dry-run           print the plan, run nothing
     python main.py --strict            warnings become errors (this is what CI runs)
-    python main.py fetch               refresh data/raw/ from upstream fdo-squirrel
+    python main.py fetch               refresh data/raw/ from fdo-squirrel (pinned tag)
+                                        and fdo-squirrel-registry (main, worked examples)
                                         (network; never part of the default run)
 """
 
